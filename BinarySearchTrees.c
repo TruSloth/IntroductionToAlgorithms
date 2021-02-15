@@ -18,43 +18,72 @@ BTNode *treePredecessor(BTNode *node);
 void treeInsert(BTNode **root, BTNode *newNode);
 void transplant(BTNode **root, BTNode **u, BTNode **v);
 void treeDelete(BTNode **root, BTNode *node);
+void treeDeleteAll(BTNode **root);
 
 int main(){
-	int i=0;
+	int c, i;
+	c = 1;
 
-	BTNode *root=NULL;
+	BTNode *root, *node;
+	root = NULL;
 
-	//question 1
-	do{
-		printf("input a value you want to insert(-1 to quit):");
+	printf("1: Insert an integer into the binary search tree;\n");
+	printf("2: Print the in-order treewalk of the binary search tree;\n");
+    printf("3: Search for an integer in the binary search tree;\n");
+    printf("4: Remove an integer from the binary search tree;\n");
+	printf("0: Quit;\n");
 
-		scanf("%d",&i);
-		if (i!=-1)
-			insertBSTNode(&root,i);
-	}while(i!=-1);
+	while (c != 0)
+	{
+		printf("Please input your choice(1/2/3/4/0): ");
+		scanf("%d", &c);
 
-	//question 2
-	printf("\n");
-	printBSTInOrder(root);
-
-	//question 3
-	if ( isBST(root,-1000000, 1000000)==1)
-		printf("It is a BST!\n");
-	else
-		printf("It is not a BST!\n");
-
-	//question 4
-	do{
-		printf("\ninput a value you want to remove(-1 to quit):");
-		scanf("%d",&i);
-		if (i!=-1)
+		switch (c)
 		{
-			root=removeBSTNode(root,i);
-			printBSTInOrder(root);
+		case 1:
+			printf("Input an integer that you want to insert into the Binary Search Tree: ");
+			scanf("%d", &i);
+			node = malloc(sizeof(BTNode));
+            node->item = i;
+            node->parent = NULL;
+            node->left = NULL;
+            node->right = NULL;
+            treeInsert(&root, node);
+			break;
+		case 2:
+			printf("The resulting in-order treewalk of the Binary Search Tree is: \n");
+			inOrderTreeWalk(root);
+            printf("\n");
+			break;
+        case 3:
+            printf("Input an integer that you want to search for: ");
+            scanf("%d", &i);
+            if (iterativeTreeSearch(root, i)) {
+                printf("Integer found!\n");
+            } else {
+                printf("Integer not in Binary Search Tree!\n");
+            }
+            break;
+        case 4:
+            printf("Input an integer that you want to remove: ");
+            scanf("%d", &i);
+            if ((node = iterativeTreeSearch(root, i))) {
+                treeDelete(&root, node);
+                printf("Integer successfully removed!\n");
+            } else {
+                printf("Error. Integer not in Binary Search Tree!\n");
+            }
+            break;
+		case 0:
+			if (root != NULL) {
+                treeDeleteAll(&root);
+            }
+			break;
+		default:
+			printf("Choice unknown;\n");
+			break;
 		}
-	}while(i!=-1);
-
-
+	}
 	return 0;
 }
 
@@ -65,6 +94,8 @@ void inOrderTreeWalk(BTNode *node) {
         inOrderTreeWalk(node->left);
         printf("%d ", node->item);
         inOrderTreeWalk(node->right);
+    } else {
+        printf("Empty tree!\n");
     }
     return;
 }
@@ -87,7 +118,7 @@ BTNode *treeSearch(BTNode *node, int key) {
 
 /*Given a pointer to the root of the tree and a key, return a pointer to the node with item key if one exists,
 otherwise return NULL*/
-BTNode *IterativeTreeSearch(BTNode *node, int key) {
+BTNode *iterativeTreeSearch(BTNode *node, int key) {
     //Iteratively perform the search instead by manipulating the pointer. More efficient on most computers.
     while (node != NULL && key != node->item) {
         if (key < node->item) {
@@ -175,36 +206,49 @@ void treeInsert(BTNode **root, BTNode *newNode) {
     return;
 }
 
+//Subroutine used for treeDelete
 void transplant(BTNode **root, BTNode **u, BTNode **v) {
-    if (*u->parent == NULL) {
+    if ((*u)->parent == NULL) {
         *root = *v;
-    } else if (*u == *u->parent->left) {
-        *u->parent->left = *v;
+    } else if (*u == (*u)->parent->left) {
+        (*u)->parent->left = *v;
     } else {
-        *u->parent->right = *v;
+        (*u)->parent->right = *v;
     }
     if (*v != NULL) {
-        v->parent = u->parent;
+        (*v)->parent = (*u)->parent;
     }
 }
 
+/*Given a pointer to the root node as well as a pointer to the node to be removed, remove that node and modify the
+BinarySearchTree accordingly*/
 void treeDelete(BTNode **root, BTNode *node) {
     BTNode *successor;
     if (node->left == NULL) {
-        transplant(*root, node, node->right);
+        transplant(root, &node, &(node->right));
     } else if (node->right == NULL) {
-        transplant(*root, node, node->left);
+        transplant(root, &node, &(node->left));
     } else {
         successor = treeMin(node->right);
         if (successor->parent != node) {
-            transplant(*root, successor, successor->right);
+            transplant(root, &successor, &(successor->right));
             successor->right = node->right;
             successor->right->parent = successor;
         }
-        transplant(*root, node, successor);
+        transplant(root, &node, &successor);
         successor->left = node->left;
         successor->left->parent = successor;
     }
+    return;
+}
+
+void treeDeleteAll(BTNode **root) {
+	if (*root != NULL) {
+		treeDeleteAll(&((*root)->left));
+		treeDeleteAll(&((*root)->right));
+		free(*root);
+		*root = NULL;
+	}
     return;
 }
 
